@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Values.config.name }}
+  labels:
+    app: {{ $.Values.app.name }}
+data:
+  MONGODB_REPLICA_SET_MODE: {{ $.Values.replicaSet.mode }}
+  MONGODB_ADVERTISED_HOSTNAME: {{ $.Values.replicaSet.hostname }}
+  MONGO_INITDB_ROOT_PASSWORD: {{ $.Values.auth.rootPassword }}
+  MONGO_INITDB_ROOT_USERNAME: {{ $.Values.auth.rootUser }}
+  MONGODB_REPLICA_SET_KEY: {{ .Values.auth.replicaSetKey }}

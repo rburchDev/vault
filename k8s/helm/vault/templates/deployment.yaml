@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.app.name }}
+  namespace: {{ .Release.Namespace }}
+  name: '{{ .Values.app.hostname }}'
+spec:
+  replicas: {{ .Values.specs.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      hostname: '{{ .Values.app.hostname }}'
+      containers:
+        - name: '{{ .Values.app.hostname }}'
+          image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
+          env:
+          - name: MONGOURL
+            value: {{ .Values.env.mongourl }}
+          - name: SECRET
+            value: {{ .Values.env.secret }}
+          ports:
+            - containerPort: {{ $.Values.service.port }}

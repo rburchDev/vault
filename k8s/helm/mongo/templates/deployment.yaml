@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.app.name }}
+  namespace: {{ .Release.Namespace }}
+  name: '{{ .Values.replicaSet.hostname }}'
+spec:
+  replicas: {{ .Values.specs.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      hostname: '{{ .Values.replicaSet.hostname }}'
+      containers:
+      - image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
+        name: '{{ .Values.replicaSet.hostname }}'
+        env:
+        - name: ENV_VALUES
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        ports:
+          - containerPort: {{ $.Values.service.port }}
+        envFrom:
+          - configMapRef:
+              name: {{ $.Values.config.name }}
+        volumeMounts:
+        - mountPath: {{ $.Values.volume.mount.entryPoint }}
+          name: {{ $.Values.volume.mount.name }}
+      volumes:
+        - name: {{ $.Values.volume.mount.name }}
+          persistentVolumeClaim:
+            claimName: {{ $.Values.volume.claim.name }}

@@ -1,0 +1,22 @@
+app:
+  name: vault
+  hostname: vault-app
+
+specs:
+  replicaCount: 3
+
+image:
+  repository: rburch4/vaultapp
+  tag: 1.0.0
+  pullPolicy: IfNotPresent
+
+service:
+  name: vault-app-node
+  type: NodePort
+  port: 8080
+  protocol: TCP
+  nodePort: 32003
+
+env:
+  mongourl: mongodb://root:root@mongo-node-svc:27017/
+  secret: secret
