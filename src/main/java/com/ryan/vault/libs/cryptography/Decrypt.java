@@ -1,4 +1,4 @@
-package com.ryan.vault.libs.encryption;
+package com.ryan.vault.libs.cryptography;
 
 import com.ryan.vault.libs.base.Base;
 
@@ -14,19 +14,19 @@ import java.util.Arrays;
 import java.util.Base64;
 
 /**
- * Public class to Encrypt and Decrypt based on algorithm provided
+ * Public class to Decrypt based on algorithm provided
  */
-public class Encrypt extends Base {
-    private static SecretKeySpec secretKey;
-    private static final String ALGORITHM = "SHA-1";
-    private static final String AES = "AES";
+public class Decrypt extends Base implements Cryptography {
+
+    public static SecretKeySpec secretKey;
 
     /**
      * helper function to set the secret key
      * @param password passed in password to establish the key with
      */
-    private static void prepareSecretKey(String password) {
-        MessageDigest sha;
+    @Override
+    public void prepareSecretKey(String password) {
+
         LOGGER.info("Preparing Key");
         try {
             byte[] key = password.getBytes(StandardCharsets.UTF_8);
@@ -44,34 +44,13 @@ public class Encrypt extends Base {
     }
 
     /**
-     * method to encrypt the passed in password based on the secret
-     * @param password String password to be encrypted
-     * @param secret String secret to use to encrypt
-     * @return Base64 encoded password or null
-     */
-    public String encrypt(String password, String secret) {
-        LOGGER.info("Encrypting based on key");
-        try {
-            prepareSecretKey(secret);
-            Cipher cipher = Cipher.getInstance(AES);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-
-            LOGGER.info("Encrypting finished");
-
-            return Base64.getEncoder().encodeToString(cipher.doFinal(password.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception e) {
-            LOGGER.warn(e);
-        }
-        return null;
-    }
-
-    /**
      * method to decrypt the passed in password based on the secret
      * @param password String password to be decrypted
      * @param secret String secret to use to decrypted
      * @return String of decrypted password or null
      */
-    public String decrypt(String password, String secret) {
+    @Override
+    public String crypt(String password, String secret) {
         LOGGER.info("Decrypting based on key");
         try {
             prepareSecretKey(secret);

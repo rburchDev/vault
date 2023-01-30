@@ -1,12 +1,14 @@
 package com.ryan.vault.libs.database;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ryan.vault.libs.encryption.Encrypt;
+import com.ryan.vault.libs.cryptography.Encrypt;
+import com.ryan.vault.libs.cryptography.Decrypt;
 import com.ryan.vault.libs.utility.Utility;
 import com.ryan.vault.libs.validation.Validation;
 import com.ryan.vault.models.DocumentModel;
 import com.ryan.vault.libs.base.Base;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -34,7 +36,8 @@ public class Mongo extends Base {
     private static final String SECRET = DOTENV.get("SECRET");
     private static final String DATABASE = "vault";
     private static final String COLLECTION = "passwordCollection";
-    public static Encrypt security = new Encrypt();
+    public static Encrypt encrypt = new Encrypt();
+    public static Decrypt decrypt = new Decrypt();
     public static Validation validate = new Validation();
 
     private static Document setDocument(String username, String secret) {
@@ -112,7 +115,7 @@ public class Mongo extends Base {
     public static String setOne(String site, String username, String password) throws MongoException {
         try {
             System.out.println(password);
-            String secretKey = security.encrypt(password, SECRET);
+            String secretKey = encrypt.crypt(password, SECRET);
             System.out.println(secretKey);
             Document modeledDoc = setDocument(username, secretKey);
 
@@ -152,7 +155,7 @@ public class Mongo extends Base {
             response = validate.checkResponse(response);
 
             docPassword = response.get("Password");
-            String password = security.decrypt(docPassword.toString(), SECRET);
+            String password = decrypt.crypt(docPassword.toString(), SECRET);
             response.append("Password", password);
 
         } catch (MongoException e) {
