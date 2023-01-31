@@ -1,6 +1,7 @@
 package com.ryan.vault.libs.cryptography;
 
 import com.ryan.vault.libs.base.Base;
+import com.ryan.vault.exceptions.cryptography.CryptographyException;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -23,9 +24,10 @@ public class Decrypt extends Base implements Cryptography {
     /**
      * helper function to set the secret key
      * @param password passed in password to establish the key with
+     * @throws CryptographyException throw error if algorithm issue occurs
      */
     @Override
-    public void prepareSecretKey(String password) {
+    public void prepareSecretKey(String password) throws CryptographyException{
 
         LOGGER.info("Preparing Key");
         try {
@@ -39,7 +41,8 @@ public class Decrypt extends Base implements Cryptography {
 
             secretKey = new SecretKeySpec(key, AES);
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.warn(e);
+            LOGGER.error("Creating secret key error occurred");
+            throw new CryptographyException("Error with Algorithm", e);
         }
     }
 
@@ -48,9 +51,10 @@ public class Decrypt extends Base implements Cryptography {
      * @param password String password to be decrypted
      * @param secret String secret to use to decrypted
      * @return String of decrypted password or null
+     * @throws CryptographyException Throw exception if decrypting issue occurs
      */
     @Override
-    public String crypt(String password, String secret) {
+    public String crypt(String password, String secret) throws CryptographyException {
         LOGGER.info("Decrypting based on key");
         try {
             prepareSecretKey(secret);
@@ -61,8 +65,8 @@ public class Decrypt extends Base implements Cryptography {
 
             return new String(cipher.doFinal(Base64.getDecoder().decode(password)));
         } catch (Exception e) {
-            LOGGER.warn(e);
+            LOGGER.error("Decrypting process threw error");
+            throw new CryptographyException("Error with Decrypting", e);
         }
-        return null;
     }
 }

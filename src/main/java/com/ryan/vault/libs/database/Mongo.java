@@ -1,11 +1,15 @@
 package com.ryan.vault.libs.database;
 
+import com.mongodb.client.*;
 import com.ryan.vault.libs.cryptography.Encrypt;
 import com.ryan.vault.libs.cryptography.Decrypt;
 import com.ryan.vault.libs.utility.Utility;
 import com.ryan.vault.libs.validation.Validation;
 import com.ryan.vault.models.DocumentModel;
 import com.ryan.vault.libs.base.Base;
+import com.ryan.vault.exceptions.cryptography.CryptographyException;
+import com.ryan.vault.exceptions.validation.ValidationException;
+import com.ryan.vault.exceptions.mongo.MongoDbException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,10 +23,6 @@ import org.bson.conversions.Bson;
 
 import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.MongoException;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.ConnectionString;
@@ -30,10 +30,14 @@ import com.mongodb.MongoClientSettings;
 
 import java.time.LocalDate;
 
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.List;
+
 public class Mongo extends Base {
     private static final Dotenv DOTENV = Utility.getDotEnv(false);
-    private static final String MONGOCLIENT = DOTENV.get("MONGOURL");
-    private static final String SECRET = DOTENV.get("SECRET");
+    private static final String MONGOCLIENT = Objects.requireNonNull(DOTENV.get("MONGOURL"));
+    private static final String SECRET = Objects.requireNonNull(DOTENV.get("SECRET"));
     private static final String DATABASE = "vault";
     private static final String COLLECTION = "passwordCollection";
     public static Encrypt encrypt = new Encrypt();
@@ -60,8 +64,9 @@ public class Mongo extends Base {
      * helper method to test if the connection to Mongo is good
      * @param mongoConnection the established Mongo connection
      * @return Command result or null
+     * @throws MongoDbException Throw exception if Mongo issue occurs
      */
-    private static Document testConnection(MongoClient mongoConnection) {
+    private static Document testConnection(MongoClient mongoConnection) throws MongoDbException {
 
         MongoDatabase db = mongoConnection.getDatabase(DATABASE);
         Document commandResult = null;
@@ -71,8 +76,8 @@ public class Mongo extends Base {
             LOGGER.info("Connection successful to Mongo");
             LOGGER.info(commandResult);
         } catch (MongoException e) {
-            LOGGER.warn("ERROR WITH MONGO");
-            LOGGER.warn(e);
+            LOGGER.error("ERROR WITH MONGO");
+            throw new MongoDbException("Error with Mongo", e);
 
         }
         return commandResult;
@@ -81,9 +86,9 @@ public class Mongo extends Base {
     /**
      * method to establish a Mongo connection
      * @return the established Mongo connection
-     * @throws MongoException Throw exception if Mongo issue occurs
+     * @throws MongoDbException Throw exception if Mongo issue occurs
      */
-    private static MongoCollection<Document> mongoClient() throws MongoException {
+    private static MongoCollection<Document> mongoClient() throws MongoDbException {
 
         MongoClient mongoConnection = MongoClients.create(
                 MongoClientSettings.builder()
@@ -95,10 +100,10 @@ public class Mongo extends Base {
         MongoCollection<Document> collection = db.getCollection(COLLECTION);
             try {
                 Document response = testConnection(mongoConnection);
-                System.out.println(response);
+                LOGGER.info("Connection Test result: " + response);
             } catch (MongoException e) {
-                LOGGER.warn("ERROR with Mongo Connection");
-                LOGGER.warn(e);
+                LOGGER.error("ERROR with Mongo Connection");
+                throw new MongoDbException("Error with Mongo Connection", e);
             }
             return collection;
 
@@ -110,27 +115,33 @@ public class Mongo extends Base {
      * @param username The username for the site
      * @param password The password for the site
      * @return String Success or Failed
-     * @throws MongoException Throw exception if Mongo issue occurs
+     * @throws MongoDbException Throw exception if Mongo issue occurs
+     * @throws CryptographyException Throw exception if encrypting issue occurs
      */
-    public static String setOne(String site, String username, String password) throws MongoException {
+    public static String setOne(String site, String username, String password) throws MongoDbException, CryptographyException {
         try {
-            System.out.println(password);
+
             String secretKey = encrypt.crypt(password, SECRET);
-            System.out.println(secretKey);
-            Document modeledDoc = setDocument(username, secretKey);
+
+            Document modeledDoc = Objects.requireNonNull(setDocument(username, secretKey));
 
             MongoCollection<Document> collection = mongoClient();
-            System.out.println(modeledDoc);
+
             Bson filter = Filters.eq("Site", site);
             Bson update = new Document("$set", modeledDoc);
             UpdateOptions options = new UpdateOptions().upsert(true);
 
             collection.updateOne(filter, update, options);
 
-        } catch (MongoException e) {
-            LOGGER.warn("ERROR WITH MONGO");
-            LOGGER.warn(e);
-            return "Failed";
+        } catch (MongoException | MongoDbException e) {
+            LOGGER.error("An error occurred with MongoDB");
+            throw new MongoDbException("Error with setting Mongo Document", e);
+        } catch (RuntimeException er) {
+            LOGGER.error("A Runtime Error occurred");
+            throw new MongoDbException("Error with setting Mongo Document", er);
+        } catch (CryptographyException e) {
+            LOGGER.error("An error occurred with Encrypting the password");
+            throw new CryptographyException("Error with Encrypting", e);
         }
         return "Success";
     }
@@ -140,9 +151,11 @@ public class Mongo extends Base {
      * @param key the key to look for
      * @param value the value to look for
      * @return Found Document or null
-     * @throws MongoException Throw exception if Mongo issue occurs
+     * @throws MongoDbException Throw exception if Mongo issue occurs
+     * @throws CryptographyException Throw exception if decrypting issue occurs
      */
-    public static Document getOne(String key, String value) throws MongoException {
+    public static Document getOne(String key, String value)
+            throws MongoDbException, CryptographyException, ValidationException {
         Document response;
         Object docPassword;
         try {
@@ -158,13 +171,53 @@ public class Mongo extends Base {
             String password = decrypt.crypt(docPassword.toString(), SECRET);
             response.append("Password", password);
 
-        } catch (MongoException e) {
-            LOGGER.warn("ERROR WITH MONGO");
-            LOGGER.warn(e);
-            return null;
+        } catch (MongoException | MongoDbException e) {
+            LOGGER.error("An error occurred with MongoDB");
+            throw new MongoDbException("Error with getting Mongo Document", e);
         } catch (RuntimeException er) {
-            LOGGER.error(er);
-            return null;
+            LOGGER.error("A Runtime Error occurred");
+            throw new MongoDbException("Error with getting Mongo Document", er);
+        } catch (CryptographyException e) {
+            LOGGER.error("An error occurred with Decrypting the password");
+            throw new CryptographyException("Error with Decrypting", e);
+        } catch (ValidationException e) {
+            LOGGER.warn("The response returned a Null when attempting to get the document");
+            throw new ValidationException("Response returned as NULL", e);
+        }
+        return response;
+    }
+
+    public static List<Document> getAll()
+            throws MongoDbException, CryptographyException {
+        List<Document> response = new ArrayList<>();
+        Object docPassword;
+        Document cursorObject;
+        try {
+            MongoCollection<Document> collection = mongoClient();
+            // get the full collection as an iterator
+            try (MongoCursor<Document> cursor = collection.find().iterator()) {
+                // Loop through each document and add to our List which we will return
+                while (cursor.hasNext()) {
+                    cursorObject = cursor.next();
+                    // Get the encrypted password and decrypt and update Document
+                    docPassword = cursorObject.get("Password");
+                    String password = decrypt.crypt(docPassword.toString(), SECRET);
+                    cursorObject.append("Password", password);
+
+                    response.add(cursorObject);
+                }
+            }
+
+            System.out.println(response);
+        } catch (MongoException | MongoDbException e) {
+            LOGGER.error("An error occurred with MongoDB");
+            throw new MongoDbException("Error with getting Mongo Document", e);
+        } catch (RuntimeException er) {
+            LOGGER.error("A Runtime Error occurred");
+            throw new MongoDbException("Error with getting Mongo Document", er);
+        } catch (CryptographyException e) {
+            LOGGER.error("An error occurred with Decrypting the password");
+            throw new CryptographyException("Error with Decrypting", e);
         }
         return response;
     }
