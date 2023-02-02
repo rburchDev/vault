@@ -7,6 +7,18 @@ import org.bson.Document;
 
 
 public class Validation extends Base {
+    public Document checkResponse(String response) throws ValidationException {
+        LOGGER.info("Checking Response from Mongo");
+        Document docResponse = new Document();
+
+        if (response.equals("Success")) {
+            docResponse = docResponse.append("Response", "Success");
+        } else {
+            docResponse = docResponse.append("Response", "Failed");
+        }
+        return docResponse;
+    }
+
     public Document checkResponse(Document response) throws ValidationException {
         LOGGER.info("Checking Response from Mongo");
 

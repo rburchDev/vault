@@ -42,15 +42,19 @@ public class Mongo extends Base {
     private static final String COLLECTION = "passwordCollection";
     public static Encrypt encrypt = new Encrypt();
     public static Decrypt decrypt = new Decrypt();
-    public static Validation validate = new Validation();
 
-    private static Document setDocument(String username, String secret) {
+    public Mongo() {
+        this.validate = new Validation();
+    }
+
+
+    private Document setDocument(String username, String secret) {
         try {
 
             DocumentModel documentModel = new DocumentModel(username, secret, LocalDate.now().toString());
 
             ObjectMapper mapper = new ObjectMapper();
-            System.out.println(documentModel);
+
             String docString = mapper.writeValueAsString(documentModel);
 
             return Document.parse(docString);
@@ -66,7 +70,7 @@ public class Mongo extends Base {
      * @return Command result or null
      * @throws MongoDbException Throw exception if Mongo issue occurs
      */
-    private static Document testConnection(MongoClient mongoConnection) throws MongoDbException {
+    private Document testConnection(MongoClient mongoConnection) throws MongoDbException {
 
         MongoDatabase db = mongoConnection.getDatabase(DATABASE);
         Document commandResult = null;
@@ -88,7 +92,7 @@ public class Mongo extends Base {
      * @return the established Mongo connection
      * @throws MongoDbException Throw exception if Mongo issue occurs
      */
-    private static MongoCollection<Document> mongoClient() throws MongoDbException {
+    private MongoCollection<Document> mongoClient() throws MongoDbException {
 
         MongoClient mongoConnection = MongoClients.create(
                 MongoClientSettings.builder()
@@ -114,11 +118,12 @@ public class Mongo extends Base {
      * @param site The site for the credentials to be saved
      * @param username The username for the site
      * @param password The password for the site
+     * @param upsert Boolean to determine if the item should be set or updated
      * @return String Success or Failed
      * @throws MongoDbException Throw exception if Mongo issue occurs
      * @throws CryptographyException Throw exception if encrypting issue occurs
      */
-    public static String setOne(String site, String username, String password) throws MongoDbException, CryptographyException {
+    public String setOne(String site, String username, String password, Boolean upsert) throws MongoDbException, CryptographyException {
         try {
 
             String secretKey = encrypt.crypt(password, SECRET);
@@ -129,7 +134,7 @@ public class Mongo extends Base {
 
             Bson filter = Filters.eq("Site", site);
             Bson update = new Document("$set", modeledDoc);
-            UpdateOptions options = new UpdateOptions().upsert(true);
+            UpdateOptions options = new UpdateOptions().upsert(upsert);
 
             collection.updateOne(filter, update, options);
 
@@ -154,7 +159,7 @@ public class Mongo extends Base {
      * @throws MongoDbException Throw exception if Mongo issue occurs
      * @throws CryptographyException Throw exception if decrypting issue occurs
      */
-    public static Document getOne(String key, String value)
+    public Document getOne(String key, String value)
             throws MongoDbException, CryptographyException, ValidationException {
         Document response;
         Object docPassword;
@@ -165,7 +170,7 @@ public class Mongo extends Base {
             response = collection.find(eq(key, value))
                     .first();
             // Check if the response is null or not, if null throw ERROR
-            response = validate.checkResponse(response);
+            response = this.validate.checkResponse(response);
 
             docPassword = response.get("Password");
             String password = decrypt.crypt(docPassword.toString(), SECRET);
@@ -187,7 +192,13 @@ public class Mongo extends Base {
         return response;
     }
 
-    public static List<Document> getAll()
+    /**
+     * method to return all the documents in the collection
+     * @return List of all documents in collection
+     * @throws MongoDbException Throw exception if Mongo issue occurs
+     * @throws CryptographyException Throw exception if decrypting issue occurs
+     */
+    public List<Document> getAll()
             throws MongoDbException, CryptographyException {
         List<Document> response = new ArrayList<>();
         Object docPassword;

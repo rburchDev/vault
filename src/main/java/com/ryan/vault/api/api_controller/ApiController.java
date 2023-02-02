@@ -5,15 +5,13 @@ import com.ryan.vault.exceptions.mongo.MongoDbException;
 import com.ryan.vault.exceptions.api.ApiException;
 import com.ryan.vault.exceptions.validation.ValidationException;
 import com.ryan.vault.libs.base.Base;
-import com.ryan.vault.libs.database.Mongo;
 
+import com.ryan.vault.libs.database.Mongo;
+import com.ryan.vault.libs.validation.Validation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import org.bson.Document;
 
@@ -22,15 +20,19 @@ import java.util.List;
 @RestController
 public class ApiController extends Base {
 
-    public ApiController() {}
+    public ApiController() {
+        this.validate = new Validation();
+        this.mongo = new Mongo();
+    }
 
     @GetMapping(value = "/getCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Document> getCreds(@RequestParam(value = "site") String site) throws ApiException {
         try {
             LOGGER.info("Getting Creds for: " + site);
-            Document docResponse = Mongo.getOne("Site", site);
+            Document docResponse = this.mongo.getOne("Site", site);
 
             return new ResponseEntity<>(docResponse, HttpStatus.ACCEPTED);
+
         } catch (MongoDbException e) {
             LOGGER.error("Error with MongoDB");
             throw new ApiException("MongoDB Error with API Call", e);
@@ -47,15 +49,16 @@ public class ApiController extends Base {
     public ResponseEntity<List<Document>> getAllCreds() throws ApiException {
         try {
             LOGGER.info("Getting all stored Creds");
-            List<Document> docResponse = Mongo.getAll();
+            List<Document> docResponse = this.mongo.getAll();
 
             return new ResponseEntity<>(docResponse, HttpStatus.ACCEPTED);
+
         } catch (MongoDbException e) {
             LOGGER.error("Error with MongoDB");
             throw new ApiException("MongoDB Error with API Call", e);
         } catch (CryptographyException e) {
             LOGGER.error("Error with Decryption");
-            throw new ApiException("Encryption Error with API Call", e);
+            throw new ApiException("Decryption Error with API Call", e);
         }
     }
 
@@ -66,21 +69,54 @@ public class ApiController extends Base {
     ) throws ApiException {
         try {
             LOGGER.info("Setting Creds for: " + site);
-            String response = Mongo.setOne(site, username, password);
-            Document docResponse = new Document();
-            if (response.equals("Success")) {
-                docResponse = docResponse.append("Response", "Success");
-            } else {
-                docResponse = docResponse.append("Response", "Failed");
-            }
+            //upsert is true because we are setting the document
+            String response = this.mongo.setOne(site, username, password, true);
+
+            //Check response
+            Document docResponse = this.validate.checkResponse(response);
+
             LOGGER.info(docResponse);
             return new ResponseEntity<>(docResponse, HttpStatus.ACCEPTED);
+
         } catch (MongoDbException e) {
             LOGGER.error("Error with MongoDB");
             throw new ApiException("MongoDB Error with API Call", e);
         } catch (CryptographyException e) {
             LOGGER.error("Error with Encryption");
             throw new ApiException("Encryption Error with API Call", e);
+        } catch (ValidationException e) {
+            LOGGER.error("Document returned with a failure when attempting to set");
+            throw new ApiException("Validation Error with API Call", e);
+        }
+    }
+
+    @PatchMapping(value = "/updateCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Document> updateCreds(@RequestParam String site,
+                                                @RequestParam String username,
+                                                @RequestParam String password
+    ) throws ApiException {
+        try{
+            LOGGER.info("Updating Creds for: " + site);
+            // If method runs without error, continue
+            this.mongo.getOne("Site", site);
+            //upsert is false because we are updating the document
+            String response = this.mongo.setOne(site, username, password, false);
+
+            //Check response
+            Document docResponse = this.validate.checkResponse(response);
+
+            LOGGER.info(docResponse);
+            return new ResponseEntity<>(docResponse, HttpStatus.ACCEPTED);
+
+        } catch (ValidationException e) {
+            LOGGER.error("Document does not exist, please use POST to add document");
+            throw new ApiException("Validation Error with API Call", e);
+        } catch (MongoDbException e) {
+            LOGGER.error("Error with MongoDB");
+            throw new ApiException("MongoDB Error with API Call", e);
+        } catch (CryptographyException e) {
+            LOGGER.error("Error with Decryption");
+            throw new ApiException("Decryption Error with API Call", e);
         }
     }
 }
