@@ -20,6 +20,14 @@ spec:
       containers:
         - name: '{{ .Values.app.hostname }}'
           image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
+          livenessProbe:
+            httpGet:
+              port: {{ $.Values.service.port }}
+              path: {{ $.Values.healthCheck.path }}
+            initialDelaySeconds: {{ $.Values.healthCheck.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.healthCheck.periodSeconds }}
+            timeoutSeconds: {{ $.Values.healthCheck.timeoutSeconds }}
+            failureThreshold: {{ $.Values.healthCheck.failureThreshold }}
           env:
           - name: MONGOURL
             value: {{ .Values.env.mongourl }}

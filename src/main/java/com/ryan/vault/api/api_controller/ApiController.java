@@ -8,6 +8,7 @@ import com.ryan.vault.libs.base.Base;
 
 import com.ryan.vault.libs.database.Mongo;
 import com.ryan.vault.libs.validation.Validation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,13 +26,24 @@ public class ApiController extends Base {
         this.mongo = new Mongo();
     }
 
+    @GetMapping(value = "/ping", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Tag(name = "HealthCheck", description = "Used to determine the health of the application")
+    public ResponseEntity<Document> getHealth() {
+        Document doc = new Document().append("ping", "pong");
+
+        LOGGER.info("Health Check Success");
+
+        return new ResponseEntity<>(doc, HttpStatus.OK);
+    }
+
     @GetMapping(value = "/getCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
     public ResponseEntity<Document> getCreds(@RequestParam(value = "site") String site) throws ApiException {
         try {
             LOGGER.info("Getting Creds for: " + site);
             Document docResponse = this.mongo.getOne("Site", site);
 
-            return new ResponseEntity<>(docResponse, HttpStatus.ACCEPTED);
+            return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
         } catch (MongoDbException e) {
             LOGGER.error("Error with MongoDB");
@@ -46,12 +58,13 @@ public class ApiController extends Base {
     }
 
     @GetMapping(value = "/getAllCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
     public ResponseEntity<List<Document>> getAllCreds() throws ApiException {
         try {
             LOGGER.info("Getting all stored Creds");
             List<Document> docResponse = this.mongo.getAll();
 
-            return new ResponseEntity<>(docResponse, HttpStatus.ACCEPTED);
+            return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
         } catch (MongoDbException e) {
             LOGGER.error("Error with MongoDB");
@@ -63,6 +76,7 @@ public class ApiController extends Base {
     }
 
     @PostMapping(value = "/setCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
     public ResponseEntity<Document> setCreds(@RequestParam String site,
                                              @RequestParam String username,
                                              @RequestParam String password
@@ -76,7 +90,7 @@ public class ApiController extends Base {
             Document docResponse = this.validate.checkResponse(response);
 
             LOGGER.info(docResponse);
-            return new ResponseEntity<>(docResponse, HttpStatus.ACCEPTED);
+            return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
         } catch (MongoDbException e) {
             LOGGER.error("Error with MongoDB");
@@ -91,6 +105,7 @@ public class ApiController extends Base {
     }
 
     @PatchMapping(value = "/updateCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
     public ResponseEntity<Document> updateCreds(@RequestParam String site,
                                                 @RequestParam String username,
                                                 @RequestParam String password
@@ -106,7 +121,35 @@ public class ApiController extends Base {
             Document docResponse = this.validate.checkResponse(response);
 
             LOGGER.info(docResponse);
-            return new ResponseEntity<>(docResponse, HttpStatus.ACCEPTED);
+            return new ResponseEntity<>(docResponse, HttpStatus.OK);
+
+        } catch (ValidationException e) {
+            LOGGER.error("Document does not exist, please use POST to add document");
+            throw new ApiException("Validation Error with API Call", e);
+        } catch (MongoDbException e) {
+            LOGGER.error("Error with MongoDB");
+            throw new ApiException("MongoDB Error with API Call", e);
+        } catch (CryptographyException e) {
+            LOGGER.error("Error with Decryption");
+            throw new ApiException("Decryption Error with API Call", e);
+        }
+    }
+
+    @DeleteMapping(value = "/deleteCredential", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
+    public ResponseEntity<Document> deleteCreds(@RequestParam String site) throws ApiException {
+        try {
+            LOGGER.info("Attempting to remove: " + site);
+            // If method runs without error, continue
+            this.mongo.getOne("Site", site);
+
+            String response = this.mongo.deleteOne(site);
+
+            //Check response
+            Document docResponse = this.validate.checkResponse(response);
+
+            LOGGER.info(docResponse);
+            return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
         } catch (ValidationException e) {
             LOGGER.error("Document does not exist, please use POST to add document");

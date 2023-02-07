@@ -20,3 +20,10 @@ service:
 env:
   mongourl: mongodb://root:root@mongo-node-svc:27017/
   secret: secret
+
+healthCheck:
+  path: "/vault/ping"
+  initialDelaySeconds: 5
+  periodSeconds: 30
+  timeoutSeconds: 3
+  failureThreshold: 3

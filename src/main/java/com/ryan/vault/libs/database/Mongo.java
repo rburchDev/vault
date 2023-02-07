@@ -1,6 +1,7 @@
 package com.ryan.vault.libs.database;
 
 import com.mongodb.client.*;
+import com.mongodb.client.result.DeleteResult;
 import com.ryan.vault.libs.cryptography.Encrypt;
 import com.ryan.vault.libs.cryptography.Decrypt;
 import com.ryan.vault.libs.utility.Utility;
@@ -218,8 +219,6 @@ public class Mongo extends Base {
                     response.add(cursorObject);
                 }
             }
-
-            System.out.println(response);
         } catch (MongoException | MongoDbException e) {
             LOGGER.error("An error occurred with MongoDB");
             throw new MongoDbException("Error with getting Mongo Document", e);
@@ -231,6 +230,28 @@ public class Mongo extends Base {
             throw new CryptographyException("Error with Decrypting", e);
         }
         return response;
+    }
+
+    public String deleteOne(String site) throws MongoDbException, ValidationException {
+        String result;
+
+        try {
+            MongoCollection<Document> collection = mongoClient();
+            // Create Bson filter to remove the site
+            Bson filter = eq("Site", site);
+            DeleteResult response = collection.deleteOne(filter);
+
+            // Validate response
+            result = this.validate.checkResponse(response);
+
+        } catch (MongoException | MongoDbException e) {
+            LOGGER.error("An error occurred with MongoDB");
+            throw new MongoDbException("Error with getting Mongo Document", e);
+        }  catch (ValidationException e) {
+            LOGGER.warn("The response returned a Null when attempting to get the document");
+            throw new ValidationException("Response returned as NULL", e);
+        }
+        return result;
     }
 }
 
