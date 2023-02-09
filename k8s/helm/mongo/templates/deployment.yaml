@@ -21,10 +21,10 @@ spec:
       - image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
         name: '{{ .Values.replicaSet.hostname }}'
         env:
-        - name: ENV_VALUES
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+          - name: ENV_VALUES
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
         ports:
           - containerPort: {{ $.Values.service.port }}
         envFrom:

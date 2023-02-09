@@ -30,7 +30,7 @@ spec:
             failureThreshold: {{ $.Values.healthCheck.failureThreshold }}
           env:
           - name: MONGOURL
-            value: {{ .Values.env.mongourl }}
+            value: {{ .Values.env.mongourl | b64dec }}
           - name: SECRET
             value: {{ .Values.env.secret }}
           ports:

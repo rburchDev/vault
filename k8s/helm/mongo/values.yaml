@@ -24,8 +24,6 @@ fullnameOverride: ""
 
 auth:
   enabled: true
-  rootUser: root
-  rootPassword: root
   replicaSetKey: replicasetkey123
 
 serviceAccount:
@@ -40,6 +38,8 @@ serviceAccount:
 replicaSet:
   mode: primary
   hostname: mongodb-primary
+  username: cm9vdAo=
+  password: cm9vdDIzTGlicmFyeQ==
   key: replicasetkey123
 
 podAnnotations: {}
