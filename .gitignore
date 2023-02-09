@@ -34,3 +34,6 @@ build/
 
 ### DS_STORE ###
 .DS_Store
+
+### ENV_FILE ###
+/src/main/resources/env-files/vault-var.env

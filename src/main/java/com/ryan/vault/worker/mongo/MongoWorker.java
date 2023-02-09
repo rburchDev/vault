@@ -5,10 +5,11 @@ import com.ryan.vault.exceptions.mongo.MongoDbException;
 import com.ryan.vault.exceptions.validation.ValidationException;
 import com.ryan.vault.libs.base.Base;
 import com.ryan.vault.libs.database.Mongo;
-import com.ryan.vault.services.email.UpdateEmail;
+import com.ryan.vault.services.email.EmailServiceImpl;
 import com.ryan.vault.libs.validation.Validation;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,8 @@ import java.util.List;
  */
 @Component
 public class MongoWorker extends Base {
-    @Autowired private UpdateEmail email;
+    @Autowired private EmailServiceImpl email;
+    @Value("${spring.mail.username}") private String sender;
 
     public MongoWorker() {
         this.validate = new Validation();
@@ -32,17 +34,17 @@ public class MongoWorker extends Base {
     }
 
     /**
-     * helper function to get the current date
-     * @return Current date in LocalDate format
+     * helper function to get the date minus three months
+     * @return Date in LocalDate format
      */
-    private LocalDate getCurrentDate() {
+    private LocalDate getOldDate() {
         LocalDate currentDate = LocalDate.now();
 
         return currentDate.minusMonths(3);
     }
 
     /**
-     * Worker function that runs daily at midnight to check how old passwords are
+     * Worker function that runs daily at noon to check how old passwords are
      */
     @Scheduled(cron = "0 0 0 * * *", zone = "MST")
     public void trackPasswordChange() {
@@ -50,7 +52,8 @@ public class MongoWorker extends Base {
         try {
             ArrayList<String> updateList = new ArrayList<>();
             LOGGER.info("Running password check");
-            LocalDate minusSixMonths = getCurrentDate();
+            //Get date minus three months
+            LocalDate minusThreeMonths = getOldDate();
 
             //Get full list of documents in collection
             List<Document> docResponse = this.mongo.getAll();
@@ -59,7 +62,8 @@ public class MongoWorker extends Base {
                 // Get date and convert to date Object
                 String date = (String) doc.get("DateSet");
                 LocalDate dateObject = LocalDate.parse(date);
-                if (dateObject.isBefore(minusSixMonths)) {
+                //Check if date set is older than 3 months
+                if (dateObject.isBefore(minusThreeMonths)) {
                     String site = (String) doc.get("Site");
                     String logMessage = String.format("%s needs to have its password updated!!!!", site);
                     LOGGER.warn(logMessage);
@@ -68,7 +72,8 @@ public class MongoWorker extends Base {
             }
 
             if (updateList.size() != 0) {
-                String response = email.sendEmail("rtburch@outlook.com", "Password Update", updateList.toString());
+                String body = String.format("Passwords for these sites need to be updated: %s", updateList);
+                String response = email.sendEmail(sender, "Password Update", body);
                 result = this.validate.checkResponse(response);
                 LOGGER.info(result.toString());
             }
