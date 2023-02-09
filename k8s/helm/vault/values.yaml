@@ -19,7 +19,8 @@ service:
 
 env:
   mongourl: bW9uZ29kYjovL3Jvb3Q6cm9vdDIzTGlicmFyeUBtb25nby1ub2RlLXN2YzoyNzAxNy8=
-  secret: secret
+  secret: c2VjcmV0
+  email: QnJvd241NTkw
 
 healthCheck:
   path: "/vault/ping"

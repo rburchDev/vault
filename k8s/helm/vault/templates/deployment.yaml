@@ -32,6 +32,8 @@ spec:
           - name: MONGOURL
             value: {{ .Values.env.mongourl | b64dec }}
           - name: SECRET
-            value: {{ .Values.env.secret }}
+            value: {{ .Values.env.secret | b64dec}}
+          - name: EMAIL_PASSWORD
+            value: {{ .Values.env.email | b64dec }}
           ports:
             - containerPort: {{ $.Values.service.port }}
