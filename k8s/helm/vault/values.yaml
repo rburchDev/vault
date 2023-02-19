@@ -4,6 +4,7 @@ app:
 
 specs:
   replicaCount: 3
+  trafficPolicy: Local
 
 image:
   repository: rburch4/vaultapp
@@ -25,6 +26,6 @@ env:
 healthCheck:
   path: "/vault/ping"
   initialDelaySeconds: 5
-  periodSeconds: 30
+  periodSeconds: 300
   timeoutSeconds: 3
   failureThreshold: 3

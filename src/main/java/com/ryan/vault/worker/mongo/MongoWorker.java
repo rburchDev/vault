@@ -46,8 +46,9 @@ public class MongoWorker extends Base {
     /**
      * Worker function that runs daily at noon to check how old passwords are
      */
-    @Scheduled(cron = "0 0 0 * * *", zone = "MST")
+    @Scheduled(cron = "@midnight", zone = "MST")
     public void trackPasswordChange() {
+        LOGGER.debug("STARTING PASSWORD AGE CHECK");
         Document result;
         try {
             ArrayList<String> updateList = new ArrayList<>();

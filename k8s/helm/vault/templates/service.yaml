@@ -5,6 +5,7 @@ metadata:
     app: {{ .Values.app.name }}
   name: {{ .Values.service.name }}
 spec:
+  externalTrafficPolicy: "{{ $.Values.specs.trafficPolicy }}"
   ports:
   - port: {{ .Values.service.port }}
     protocol: {{ .Values.service.protocol }}

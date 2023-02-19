@@ -1,5 +1,7 @@
 package com.ryan.vault.services.email;
 
+import com.ryan.vault.libs.base.Base;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -12,7 +14,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Component
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl extends Base implements EmailService {
     private final JavaMailSender mailSender;
     @Value("${spring.mail.username}") private String sender;
     @Autowired
@@ -28,6 +30,7 @@ public class EmailServiceImpl implements EmailService {
      * @return Either a Success string or Failed string
      */
     public String sendEmail(String to, String subject, String body) {
+        LOGGER.debug("Starting to send Email");
         try{
             SimpleMailMessage mailMessage = new SimpleMailMessage();
 
@@ -40,6 +43,7 @@ public class EmailServiceImpl implements EmailService {
 
             return "Success";
         } catch (Exception e) {
+            LOGGER.error("Email Send Failed: " + e);
             return "Failed";
         }
 
