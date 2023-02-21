@@ -9,7 +9,7 @@ import com.ryan.vault.libs.validation.Validation;
 import com.ryan.vault.models.DocumentModel;
 import com.ryan.vault.libs.base.Base;
 import com.ryan.vault.exceptions.cryptography.CryptographyException;
-import com.ryan.vault.exceptions.validation.ValidationException;
+import com.ryan.vault.exceptions.validation.NotFoundException;
 import com.ryan.vault.exceptions.mongo.MongoDbException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -161,7 +161,7 @@ public class Mongo extends Base {
      * @throws CryptographyException Throw exception if decrypting issue occurs
      */
     public Document getOne(String key, String value)
-            throws MongoDbException, CryptographyException, ValidationException {
+            throws MongoDbException, CryptographyException, NotFoundException {
         Document response;
         Object docPassword;
         try {
@@ -186,9 +186,9 @@ public class Mongo extends Base {
         } catch (CryptographyException e) {
             LOGGER.error("An error occurred with Decrypting the password");
             throw new CryptographyException("Error with Decrypting", e);
-        } catch (ValidationException e) {
+        } catch (NotFoundException e) {
             LOGGER.warn("The response returned a Null when attempting to get the document");
-            throw new ValidationException("Response returned as NULL", e);
+            throw new NotFoundException("Response returned as NULL", e);
         }
         return response;
     }
@@ -232,7 +232,7 @@ public class Mongo extends Base {
         return response;
     }
 
-    public String deleteOne(String site) throws MongoDbException, ValidationException {
+    public String deleteOne(String site) throws MongoDbException, NotFoundException {
         String result;
 
         try {
@@ -247,9 +247,9 @@ public class Mongo extends Base {
         } catch (MongoException | MongoDbException e) {
             LOGGER.error("An error occurred with MongoDB");
             throw new MongoDbException("Error with getting Mongo Document", e);
-        }  catch (ValidationException e) {
+        }  catch (NotFoundException e) {
             LOGGER.warn("The response returned a Null when attempting to get the document");
-            throw new ValidationException("Response returned as NULL", e);
+            throw new NotFoundException("Response returned as NULL", e);
         }
         return result;
     }

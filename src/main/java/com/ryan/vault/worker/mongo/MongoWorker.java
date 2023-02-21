@@ -2,7 +2,7 @@ package com.ryan.vault.worker.mongo;
 
 import com.ryan.vault.exceptions.cryptography.CryptographyException;
 import com.ryan.vault.exceptions.mongo.MongoDbException;
-import com.ryan.vault.exceptions.validation.ValidationException;
+import com.ryan.vault.exceptions.validation.NotFoundException;
 import com.ryan.vault.libs.base.Base;
 import com.ryan.vault.libs.database.Mongo;
 import com.ryan.vault.services.email.EmailServiceImpl;
@@ -83,7 +83,7 @@ public class MongoWorker extends Base {
             LOGGER.error("Error with MongoDB");
         } catch (CryptographyException e) {
             LOGGER.error("Error with Decryption");
-        } catch (ValidationException e) {
+        } catch (NotFoundException e) {
             LOGGER.error("Error with validation");
         }
     }

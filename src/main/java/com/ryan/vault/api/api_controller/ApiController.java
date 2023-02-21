@@ -2,10 +2,11 @@ package com.ryan.vault.api.api_controller;
 
 import com.ryan.vault.exceptions.cryptography.CryptographyException;
 import com.ryan.vault.exceptions.mongo.MongoDbException;
-import com.ryan.vault.exceptions.api.ApiException;
-import com.ryan.vault.exceptions.validation.ValidationException;
+import com.ryan.vault.exceptions.validation.NotFoundException;
+import com.ryan.vault.exceptions.validation.BadRequestException;
 import com.ryan.vault.libs.base.Base;
 import com.ryan.vault.libs.database.Mongo;
+import com.ryan.vault.libs.utility.CleanInputs;
 import com.ryan.vault.libs.validation.Validation;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +26,7 @@ public class ApiController extends Base {
     public ApiController() {
         this.validate = new Validation();
         this.mongo = new Mongo();
+        this.cleanInputs = new CleanInputs();
     }
 
     @GetMapping(value = "/ping", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -39,28 +41,41 @@ public class ApiController extends Base {
 
     @GetMapping(value = "/getCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
     @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
-    public ResponseEntity<Document> getCreds(@RequestParam(value = "site") String site) throws ApiException {
+    public ResponseEntity<Document> getCreds(@RequestParam(value = "site") String site)
+            throws NotFoundException, MongoDbException, CryptographyException, BadRequestException {
         try {
             LOGGER.info("Getting Creds for: " + site);
-            Document docResponse = this.mongo.getOne("Site", site);
+
+            //Validate Site string does not contain special characters
+            if (this.validate.checkSiteString(site)) {
+                throw new BadRequestException("Item contains Special Characters in the Site name... Please correct");
+            }
+
+            //Set site as lowercase and remove white space
+            String convertedString = this.cleanInputs.setSiteString(site);
+
+            Document docResponse = this.mongo.getOne("Site", convertedString);
 
             return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
         } catch (MongoDbException e) {
-            LOGGER.error("Error with MongoDB");
-            throw new ApiException("MongoDB Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new MongoDbException(e.getMessage());
         } catch (CryptographyException e) {
-            LOGGER.error("Error with Decryption");
-            throw new ApiException("Decryption Error with API Call", e);
-        } catch (ValidationException e) {
-            LOGGER.error("Error with validating MongoDB response from GET call");
-            throw new ApiException("Validation Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new CryptographyException(e.getMessage());
+        } catch (NotFoundException e) {
+            LOGGER.error(e.getMessage());
+            throw new NotFoundException(e.getMessage());
+        } catch (BadRequestException e) {
+            LOGGER.error(e.getMessage());
+            throw new BadRequestException(e.getMessage());
         }
     }
 
     @GetMapping(value = "/getAllCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
     @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
-    public ResponseEntity<List<Document>> getAllCreds() throws ApiException {
+    public ResponseEntity<List<Document>> getAllCreds() throws MongoDbException, CryptographyException {
         try {
             LOGGER.info("Getting all stored Creds");
             List<Document> docResponse = this.mongo.getAll();
@@ -68,11 +83,11 @@ public class ApiController extends Base {
             return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
         } catch (MongoDbException e) {
-            LOGGER.error("Error with MongoDB");
-            throw new ApiException("MongoDB Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new MongoDbException(e.getMessage());
         } catch (CryptographyException e) {
-            LOGGER.error("Error with Decryption");
-            throw new ApiException("Decryption Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new CryptographyException(e.getMessage());
         }
     }
 
@@ -81,11 +96,29 @@ public class ApiController extends Base {
     public ResponseEntity<Document> setCreds(@RequestParam String site,
                                              @RequestParam String username,
                                              @RequestParam String password
-    ) throws ApiException {
+    ) throws MongoDbException, NotFoundException, CryptographyException, BadRequestException {
         try {
             LOGGER.info("Setting Creds for: " + site);
+            //Validate Site string does not contain special characters
+            if (this.validate.checkSiteString(site)) {
+                throw new BadRequestException("Item contains Special Characters in the Site name... Please correct");
+            }
+
+            //Set site as lowercase and remove white space
+            String convertedString = this.cleanInputs.setSiteString(site);
+
+            //Need to check if the credentials exists already
+            try{
+                Document getDocResponse = this.mongo.getOne("Site", convertedString);
+                if (!getDocResponse.isEmpty()) {
+                    throw new BadRequestException("Item already exists... Please use PUT method to update...");
+                }
+            } catch (NotFoundException e) {
+                LOGGER.debug(e.getMessage());
+            }
+
             //upsert is true because we are setting the document
-            String response = this.mongo.setOne(site, username, password, true);
+            String response = this.mongo.setOne(convertedString, username, password, true);
 
             //Check response
             Document docResponse = this.validate.checkResponse(response);
@@ -94,14 +127,17 @@ public class ApiController extends Base {
             return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
         } catch (MongoDbException e) {
-            LOGGER.error("Error with MongoDB");
-            throw new ApiException("MongoDB Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new MongoDbException(e.getMessage());
         } catch (CryptographyException e) {
-            LOGGER.error("Error with Encryption");
-            throw new ApiException("Encryption Error with API Call", e);
-        } catch (ValidationException e) {
-            LOGGER.error("Document returned with a failure when attempting to set");
-            throw new ApiException("Validation Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new CryptographyException(e.getMessage());
+        } catch (NotFoundException e) {
+            LOGGER.error(e.getMessage());
+            throw new NotFoundException(e.getMessage());
+        } catch (BadRequestException e) {
+            LOGGER.error(e.getMessage());
+            throw new BadRequestException(e.getMessage());
         }
     }
 
@@ -110,13 +146,22 @@ public class ApiController extends Base {
     public ResponseEntity<Document> updateCreds(@RequestParam String site,
                                                 @RequestParam String username,
                                                 @RequestParam String password
-    ) throws ApiException {
+    ) throws NotFoundException, MongoDbException, CryptographyException, BadRequestException {
         try{
             LOGGER.info("Updating Creds for: " + site);
+
+            //Validate Site string does not contain special characters
+            if (this.validate.checkSiteString(site)) {
+                throw new BadRequestException("Item contains Special Characters in the Site name... Please correct");
+            }
+
+            //Set site as lowercase and remove white space
+            String convertedString = this.cleanInputs.setSiteString(site);
+
             // If method runs without error, continue
-            this.mongo.getOne("Site", site);
+            this.mongo.getOne("Site", convertedString);
             //upsert is false because we are updating the document
-            String response = this.mongo.setOne(site, username, password, false);
+            String response = this.mongo.setOne(convertedString, username, password, false);
 
             //Check response
             Document docResponse = this.validate.checkResponse(response);
@@ -124,27 +169,40 @@ public class ApiController extends Base {
             LOGGER.info(docResponse);
             return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
-        } catch (ValidationException e) {
+        } catch (NotFoundException e) {
             LOGGER.error("Document does not exist, please use POST to add document");
-            throw new ApiException("Validation Error with API Call", e);
+            throw new NotFoundException("Document does not exist, please use POST to add document", e);
         } catch (MongoDbException e) {
-            LOGGER.error("Error with MongoDB");
-            throw new ApiException("MongoDB Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new MongoDbException(e.getMessage());
         } catch (CryptographyException e) {
-            LOGGER.error("Error with Decryption");
-            throw new ApiException("Decryption Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new CryptographyException(e.getMessage());
+        } catch (BadRequestException e) {
+            LOGGER.error(e.getMessage());
+            throw new BadRequestException(e.getMessage());
         }
     }
 
     @DeleteMapping(value = "/deleteCredential", produces = MediaType.APPLICATION_JSON_VALUE)
     @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
-    public ResponseEntity<Document> deleteCreds(@RequestParam String site) throws ApiException {
+    public ResponseEntity<Document> deleteCreds(@RequestParam String site)
+            throws MongoDbException, NotFoundException, CryptographyException, BadRequestException {
         try {
             LOGGER.info("Attempting to remove: " + site);
-            // If method runs without error, continue
-            this.mongo.getOne("Site", site);
 
-            String response = this.mongo.deleteOne(site);
+            //Validate Site string does not contain special characters
+            if (this.validate.checkSiteString(site)) {
+                throw new BadRequestException("Item contains Special Characters in the Site name... Please correct");
+            }
+
+            //Set site as lowercase and remove white space
+            String convertedString = this.cleanInputs.setSiteString(site);
+
+            // If method runs without error, continue
+            this.mongo.getOne("Site", convertedString);
+
+            String response = this.mongo.deleteOne(convertedString);
 
             //Check response
             Document docResponse = this.validate.checkResponse(response);
@@ -152,15 +210,18 @@ public class ApiController extends Base {
             LOGGER.info(docResponse);
             return new ResponseEntity<>(docResponse, HttpStatus.OK);
 
-        } catch (ValidationException e) {
+        } catch (NotFoundException e) {
             LOGGER.error("Document does not exist, please use POST to add document");
-            throw new ApiException("Validation Error with API Call", e);
+            throw new NotFoundException("Document does not exist, please use POST to add document", e);
         } catch (MongoDbException e) {
-            LOGGER.error("Error with MongoDB");
-            throw new ApiException("MongoDB Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new MongoDbException(e.getMessage());
         } catch (CryptographyException e) {
-            LOGGER.error("Error with Decryption");
-            throw new ApiException("Decryption Error with API Call", e);
+            LOGGER.error(e.getMessage());
+            throw new CryptographyException(e.getMessage());
+        } catch (BadRequestException e) {
+            LOGGER.error(e.getMessage());
+            throw new BadRequestException(e.getMessage());
         }
     }
 }

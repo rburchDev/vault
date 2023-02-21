@@ -2,6 +2,7 @@ package com.ryan.vault.libs.base;
 
 import com.ryan.vault.libs.validation.Validation;
 import com.ryan.vault.libs.database.Mongo;
+import com.ryan.vault.libs.utility.CleanInputs;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +14,7 @@ public abstract class Base {
     public static MessageDigest sha;
     public Validation validate;
     public Mongo mongo;
+    public CleanInputs cleanInputs;
 
     public Base() {
     }
