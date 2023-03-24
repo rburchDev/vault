@@ -9,6 +9,7 @@ import com.ryan.vault.libs.database.Mongo;
 import com.ryan.vault.libs.utility.CleanInputs;
 import com.ryan.vault.libs.validation.Validation;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import org.bson.Document;
 import java.util.List;
 
 @RestController
+@SecurityRequirement(name = "vaultAPI")
 public class ApiController extends Base {
 
     public ApiController() {
