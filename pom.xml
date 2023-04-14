@@ -28,6 +28,7 @@
         <openapi.version>2.0.2</openapi.version>
         <openapi-security.version>1.6.15</openapi-security.version>
         <openapi-generator.version>6.2.1</openapi-generator.version>
+        <junit.version>4.13.2</junit.version>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
     </properties>
@@ -130,6 +131,14 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-security</artifactId>
             <version>${openapi-security.version}</version>
+        </dependency>
+
+        <!--Junit-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
