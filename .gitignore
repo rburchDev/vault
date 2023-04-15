@@ -38,3 +38,6 @@ build/
 ### ENV_FILE ###
 /src/main/resources/env-files/vault-var.env
 /src/main/resources/env-files/vault-test-var.env
+
+### CONF ###
+/conf/*
