@@ -1,6 +1,7 @@
 package com.ryan.vault.libs.validation;
 
 import com.mongodb.client.result.DeleteResult;
+
 import com.ryan.vault.libs.base.Base;
 import com.ryan.vault.exceptions.validation.NotFoundException;
 

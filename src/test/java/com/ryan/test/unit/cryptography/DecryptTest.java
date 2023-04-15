@@ -1,4 +1,4 @@
-package com.ryan.test.unit;
+package com.ryan.test.unit.cryptography;
 
 import com.ryan.vault.libs.cryptography.Decrypt;
 import com.ryan.vault.exceptions.cryptography.CryptographyException;
