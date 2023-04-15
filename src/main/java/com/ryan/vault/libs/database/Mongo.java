@@ -93,7 +93,7 @@ public class Mongo extends Base {
      * @return the established Mongo connection
      * @throws MongoDbException Throw exception if Mongo issue occurs
      */
-    private MongoCollection<Document> mongoClient() throws MongoDbException {
+    public MongoCollection<Document> mongoClient() throws MongoDbException {
 
         MongoClient mongoConnection = MongoClients.create(
                 MongoClientSettings.builder()
