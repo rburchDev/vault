@@ -48,12 +48,12 @@ public class ApiController extends Base {
         try {
             LOGGER.info("Getting Creds for: " + site);
 
-            //Validate Site string does not contain special characters
+            // Validate Site string does not contain special characters
             if (this.validate.checkSiteString(site)) {
                 throw new BadRequestException("Item contains Special Characters in the Site name... Please correct");
             }
 
-            //Set site as lowercase and remove white space
+            // Set site as lowercase and remove white space
             String convertedString = this.cleanInputs.setSiteString(site);
 
             Document docResponse = this.mongo.getOne("Site", convertedString);
@@ -95,22 +95,21 @@ public class ApiController extends Base {
 
     @PostMapping(value = "/setCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
     @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
-    public ResponseEntity<Document> setCreds(@RequestParam String site,
-                                             @RequestParam String username,
-                                             @RequestParam String password
-    ) throws MongoDbException, NotFoundException, CryptographyException, BadRequestException {
+    public ResponseEntity<Document> setCreds(@RequestParam String site, @RequestParam String username,
+            @RequestParam String password)
+            throws MongoDbException, NotFoundException, CryptographyException, BadRequestException {
         try {
             LOGGER.info("Setting Creds for: " + site);
-            //Validate Site string does not contain special characters
+            // Validate Site string does not contain special characters
             if (this.validate.checkSiteString(site)) {
                 throw new BadRequestException("Item contains Special Characters in the Site name... Please correct");
             }
 
-            //Set site as lowercase and remove white space
+            // Set site as lowercase and remove white space
             String convertedString = this.cleanInputs.setSiteString(site);
 
-            //Need to check if the credentials exists already
-            try{
+            // Need to check if the credentials exists already
+            try {
                 Document getDocResponse = this.mongo.getOne("Site", convertedString);
                 if (!getDocResponse.isEmpty()) {
                     throw new BadRequestException("Item already exists... Please use PUT method to update...");
@@ -119,10 +118,10 @@ public class ApiController extends Base {
                 LOGGER.debug(e.getMessage());
             }
 
-            //upsert is true because we are setting the document
+            // upsert is true because we are setting the document
             String response = this.mongo.setOne(convertedString, username, password, true);
 
-            //Check response
+            // Check response
             Document docResponse = this.validate.checkResponse(response);
 
             LOGGER.info(docResponse);
@@ -145,27 +144,26 @@ public class ApiController extends Base {
 
     @PatchMapping(value = "/updateCredentials", produces = MediaType.APPLICATION_JSON_VALUE)
     @Tag(name = "Vault", description = "Set of APIs to maintain a collection of credentials in a secure Vault")
-    public ResponseEntity<Document> updateCreds(@RequestParam String site,
-                                                @RequestParam String username,
-                                                @RequestParam String password
-    ) throws NotFoundException, MongoDbException, CryptographyException, BadRequestException {
-        try{
+    public ResponseEntity<Document> updateCreds(@RequestParam String site, @RequestParam String username,
+            @RequestParam String password)
+            throws NotFoundException, MongoDbException, CryptographyException, BadRequestException {
+        try {
             LOGGER.info("Updating Creds for: " + site);
 
-            //Validate Site string does not contain special characters
+            // Validate Site string does not contain special characters
             if (this.validate.checkSiteString(site)) {
                 throw new BadRequestException("Item contains Special Characters in the Site name... Please correct");
             }
 
-            //Set site as lowercase and remove white space
+            // Set site as lowercase and remove white space
             String convertedString = this.cleanInputs.setSiteString(site);
 
             // If method runs without error, continue
             this.mongo.getOne("Site", convertedString);
-            //upsert is false because we are updating the document
+            // upsert is false because we are updating the document
             String response = this.mongo.setOne(convertedString, username, password, false);
 
-            //Check response
+            // Check response
             Document docResponse = this.validate.checkResponse(response);
 
             LOGGER.info(docResponse);
@@ -193,12 +191,12 @@ public class ApiController extends Base {
         try {
             LOGGER.info("Attempting to remove: " + site);
 
-            //Validate Site string does not contain special characters
+            // Validate Site string does not contain special characters
             if (this.validate.checkSiteString(site)) {
                 throw new BadRequestException("Item contains Special Characters in the Site name... Please correct");
             }
 
-            //Set site as lowercase and remove white space
+            // Set site as lowercase and remove white space
             String convertedString = this.cleanInputs.setSiteString(site);
 
             // If method runs without error, continue
@@ -206,7 +204,7 @@ public class ApiController extends Base {
 
             String response = this.mongo.deleteOne(convertedString);
 
-            //Check response
+            // Check response
             Document docResponse = this.validate.checkResponse(response);
 
             LOGGER.info(docResponse);

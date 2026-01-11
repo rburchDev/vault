@@ -22,11 +22,15 @@ public class Encrypt extends Base implements Cryptography {
 
     /**
      * helper function to set the secret key
-     * @param password passed in password to establish the key with
-     * @throws CryptographyException throw error if algorithm issue occurs
+     *
+     * @param password
+     *            passed in password to establish the key with
+     *
+     * @throws CryptographyException
+     *             throw error if algorithm issue occurs
      */
     @Override
-    public void prepareSecretKey(String password) throws CryptographyException{
+    public void prepareSecretKey(String password) throws CryptographyException {
         LOGGER.info("Preparing Key");
         try {
             byte[] key = password.getBytes(StandardCharsets.UTF_8);
@@ -46,10 +50,16 @@ public class Encrypt extends Base implements Cryptography {
 
     /**
      * method to encrypt the passed in password based on the secret
-     * @param password String password to be encrypted
-     * @param secret String secret to use to encrypt
+     *
+     * @param password
+     *            String password to be encrypted
+     * @param secret
+     *            String secret to use to encrypt
+     *
      * @return Base64 encoded password or null
-     * @throws CryptographyException Throw exception if encrypting issue occurs
+     *
+     * @throws CryptographyException
+     *             Throw exception if encrypting issue occurs
      */
     @Override
     public String crypt(String password, String secret) throws CryptographyException {

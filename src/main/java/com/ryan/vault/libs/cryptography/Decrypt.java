@@ -23,11 +23,15 @@ public class Decrypt extends Base implements Cryptography {
 
     /**
      * helper function to set the secret key
-     * @param password passed in password to establish the key with
-     * @throws CryptographyException throw error if algorithm issue occurs
+     *
+     * @param password
+     *            passed in password to establish the key with
+     *
+     * @throws CryptographyException
+     *             throw error if algorithm issue occurs
      */
     @Override
-    public void prepareSecretKey(String password) throws CryptographyException{
+    public void prepareSecretKey(String password) throws CryptographyException {
 
         LOGGER.info("Preparing Key");
         try {
@@ -48,10 +52,16 @@ public class Decrypt extends Base implements Cryptography {
 
     /**
      * method to decrypt the passed in password based on the secret
-     * @param password String password to be decrypted
-     * @param secret String secret to use to decrypted
+     *
+     * @param password
+     *            String password to be decrypted
+     * @param secret
+     *            String secret to use to decrypted
+     *
      * @return String of decrypted password or null
-     * @throws CryptographyException Throw exception if decrypting issue occurs
+     *
+     * @throws CryptographyException
+     *             Throw exception if decrypting issue occurs
      */
     @Override
     public String crypt(String password, String secret) throws CryptographyException {

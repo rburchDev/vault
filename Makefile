@@ -1,3 +1,9 @@
+install:
+	mvn dependency:go-offline -DskipTests
+
+lint: ## Lint code
+	mvn formatter:format
+
 setup-mongo:
 	helm install mongo -f k8s/helm/mongo/values.yaml k8s/helm/mongo --create-namespace --namespace vault
 
