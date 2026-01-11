@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 @Component
 public class EmailServiceImpl extends Base implements EmailService {
     private final JavaMailSender mailSender;
-    @Value("${spring.mail.username}") private String sender;
+    @Value("${spring.mail.username}")
+    private String sender;
+
     @Autowired
     public EmailServiceImpl(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -24,14 +26,19 @@ public class EmailServiceImpl extends Base implements EmailService {
 
     /**
      * Method to send an email
-     * @param to who is email going to
-     * @param subject what is the subject of the email
-     * @param body the body to be sent with the email
+     *
+     * @param to
+     *            who is email going to
+     * @param subject
+     *            what is the subject of the email
+     * @param body
+     *            the body to be sent with the email
+     *
      * @return Either a Success string or Failed string
      */
     public String sendEmail(String to, String subject, String body) {
         LOGGER.debug("Starting to send Email");
-        try{
+        try {
             SimpleMailMessage mailMessage = new SimpleMailMessage();
 
             mailMessage.setFrom(sender);

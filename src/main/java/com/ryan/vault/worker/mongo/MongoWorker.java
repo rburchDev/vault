@@ -25,8 +25,10 @@ import java.util.List;
  */
 @Component
 public class MongoWorker extends Base {
-    @Autowired private EmailServiceImpl email;
-    @Value("${spring.mail.username}") private String sender;
+    @Autowired
+    private EmailServiceImpl email;
+    @Value("${spring.mail.username}")
+    private String sender;
 
     public MongoWorker() {
         this.validate = new Validation();
@@ -35,6 +37,7 @@ public class MongoWorker extends Base {
 
     /**
      * helper function to get the date minus three months
+     *
      * @return Date in LocalDate format
      */
     private LocalDate getOldDate() {
@@ -53,17 +56,17 @@ public class MongoWorker extends Base {
         try {
             ArrayList<String> updateList = new ArrayList<>();
             LOGGER.info("Running password check");
-            //Get date minus three months
+            // Get date minus three months
             LocalDate minusThreeMonths = getOldDate();
 
-            //Get full list of documents in collection
+            // Get full list of documents in collection
             List<Document> docResponse = this.mongo.getAll();
 
             for (Document doc : docResponse) {
                 // Get date and convert to date Object
                 String date = (String) doc.get("DateSet");
                 LocalDate dateObject = LocalDate.parse(date);
-                //Check if date set is older than 3 months
+                // Check if date set is older than 3 months
                 if (dateObject.isBefore(minusThreeMonths)) {
                     String site = (String) doc.get("Site");
                     String logMessage = String.format("%s needs to have its password updated!!!!", site);

@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SecurityScheme(name = "vaultAPI", scheme = "basic", type = SecuritySchemeType.HTTP, in = SecuritySchemeIn.HEADER)
 public class SpringVaultApplication {
     private static final Logger LOGGER = LogManager.getLogger(SpringVaultApplication.class);
+
     public static void main(String[] args) {
 
         LOGGER.info("Starting SpringBoot Vault APP");

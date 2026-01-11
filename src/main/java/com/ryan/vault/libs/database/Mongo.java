@@ -48,7 +48,6 @@ public class Mongo extends Base {
         this.validate = new Validation();
     }
 
-
     private Document setDocument(String username, String secret) {
         try {
 
@@ -67,9 +66,14 @@ public class Mongo extends Base {
 
     /**
      * helper method to test if the connection to Mongo is good
-     * @param mongoConnection the established Mongo connection
+     *
+     * @param mongoConnection
+     *            the established Mongo connection
+     *
      * @return Command result or null
-     * @throws MongoDbException Throw exception if Mongo issue occurs
+     *
+     * @throws MongoDbException
+     *             Throw exception if Mongo issue occurs
      */
     private Document testConnection(MongoClient mongoConnection) throws MongoDbException {
 
@@ -90,41 +94,51 @@ public class Mongo extends Base {
 
     /**
      * method to establish a Mongo connection
+     *
      * @return the established Mongo connection
-     * @throws MongoDbException Throw exception if Mongo issue occurs
+     *
+     * @throws MongoDbException
+     *             Throw exception if Mongo issue occurs
      */
     public MongoCollection<Document> mongoClient() throws MongoDbException {
 
-        MongoClient mongoConnection = MongoClients.create(
-                MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString(MONGOCLIENT))
-                        .build()
-        );
+        MongoClient mongoConnection = MongoClients
+                .create(MongoClientSettings.builder().applyConnectionString(new ConnectionString(MONGOCLIENT)).build());
         MongoDatabase db = mongoConnection.getDatabase(DATABASE);
 
         MongoCollection<Document> collection = db.getCollection(COLLECTION);
-            try {
-                Document response = testConnection(mongoConnection);
-                LOGGER.info("Connection Test result: " + response);
-            } catch (MongoException e) {
-                LOGGER.error("ERROR with Mongo Connection");
-                throw new MongoDbException("Error with Mongo Connection", e);
-            }
-            return collection;
+        try {
+            Document response = testConnection(mongoConnection);
+            LOGGER.info("Connection Test result: " + response);
+        } catch (MongoException e) {
+            LOGGER.error("ERROR with Mongo Connection");
+            throw new MongoDbException("Error with Mongo Connection", e);
+        }
+        return collection;
 
     }
 
     /**
      * method to insert or update a document in the vault collection
-     * @param site The site for the credentials to be saved
-     * @param username The username for the site
-     * @param password The password for the site
-     * @param upsert Boolean to determine if the item should be set or updated
+     *
+     * @param site
+     *            The site for the credentials to be saved
+     * @param username
+     *            The username for the site
+     * @param password
+     *            The password for the site
+     * @param upsert
+     *            Boolean to determine if the item should be set or updated
+     *
      * @return String Success or Failed
-     * @throws MongoDbException Throw exception if Mongo issue occurs
-     * @throws CryptographyException Throw exception if encrypting issue occurs
+     *
+     * @throws MongoDbException
+     *             Throw exception if Mongo issue occurs
+     * @throws CryptographyException
+     *             Throw exception if encrypting issue occurs
      */
-    public String setOne(String site, String username, String password, Boolean upsert) throws MongoDbException, CryptographyException {
+    public String setOne(String site, String username, String password, Boolean upsert)
+            throws MongoDbException, CryptographyException {
         try {
 
             String secretKey = encrypt.crypt(password, SECRET);
@@ -154,22 +168,27 @@ public class Mongo extends Base {
 
     /**
      * method to find the passed in document based on the key value pair
-     * @param key the key to look for
-     * @param value the value to look for
+     *
+     * @param key
+     *            the key to look for
+     * @param value
+     *            the value to look for
+     *
      * @return Found Document or null
-     * @throws MongoDbException Throw exception if Mongo issue occurs
-     * @throws CryptographyException Throw exception if decrypting issue occurs
+     *
+     * @throws MongoDbException
+     *             Throw exception if Mongo issue occurs
+     * @throws CryptographyException
+     *             Throw exception if decrypting issue occurs
      */
-    public Document getOne(String key, String value)
-            throws MongoDbException, CryptographyException, NotFoundException {
+    public Document getOne(String key, String value) throws MongoDbException, CryptographyException, NotFoundException {
         Document response;
         Object docPassword;
         try {
 
             MongoCollection<Document> collection = mongoClient();
 
-            response = collection.find(eq(key, value))
-                    .first();
+            response = collection.find(eq(key, value)).first();
             // Check if the response is null or not, if null throw ERROR
             response = this.validate.checkResponse(response);
 
@@ -195,12 +214,15 @@ public class Mongo extends Base {
 
     /**
      * method to return all the documents in the collection
+     *
      * @return List of all documents in collection
-     * @throws MongoDbException Throw exception if Mongo issue occurs
-     * @throws CryptographyException Throw exception if decrypting issue occurs
+     *
+     * @throws MongoDbException
+     *             Throw exception if Mongo issue occurs
+     * @throws CryptographyException
+     *             Throw exception if decrypting issue occurs
      */
-    public List<Document> getAll()
-            throws MongoDbException, CryptographyException {
+    public List<Document> getAll() throws MongoDbException, CryptographyException {
         List<Document> response = new ArrayList<>();
         Object docPassword;
         Document cursorObject;
@@ -247,11 +269,10 @@ public class Mongo extends Base {
         } catch (MongoException | MongoDbException e) {
             LOGGER.error("An error occurred with MongoDB");
             throw new MongoDbException("Error with getting Mongo Document", e);
-        }  catch (NotFoundException e) {
+        } catch (NotFoundException e) {
             LOGGER.warn("The response returned a Null when attempting to get the document");
             throw new NotFoundException("Response returned as NULL", e);
         }
         return result;
     }
 }
-

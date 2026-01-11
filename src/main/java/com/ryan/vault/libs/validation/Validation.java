@@ -10,7 +10,6 @@ import org.bson.Document;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class Validation extends Base {
     public Document checkResponse(String response) throws NotFoundException {
         LOGGER.info("Checking Response from Mongo");
@@ -49,7 +48,7 @@ public class Validation extends Base {
     }
 
     public boolean checkSiteString(String site) {
-        //Check that the Site string does not contain special characters
+        // Check that the Site string does not contain special characters
         Pattern pattern = Pattern.compile("[^a-z0-9]", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(site);
 

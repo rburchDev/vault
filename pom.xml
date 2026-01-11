@@ -6,13 +6,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.2</version>
+        <version>4.0.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>com.ryan.vault</groupId>
     <artifactId>spring-vault</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>spring-vault</name>
@@ -20,16 +20,22 @@
 
     <properties>
         <dotenv.version>5.2.2</dotenv.version>
-        <log4j.version>2.18.0</log4j.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>19</java.version>
+        <log4j.version>2.25.3</log4j.version>
+        <json.version>20250517</json.version>
+        <jackson.version>2.20.1</jackson.version>
+        <awaitability.version>4.3.0</awaitability.version>
         <http.version>4.5.14</http.version>
-        <openapi.version>2.0.2</openapi.version>
-        <openapi-security.version>1.6.15</openapi-security.version>
+        <mongo.version>5.6.2</mongo.version>
+        <openapi.version>2.8.15</openapi.version>
+        <openapi-security.version>1.8.0</openapi-security.version>
         <openapi-generator.version>6.2.1</openapi-generator.version>
         <junit.version>4.13.2</junit.version>
         <mockito.version>5.3.0</mockito.version>
+        <powermock.version>2.0.9</powermock.version>
+        <formatter.version>2.23.0</formatter.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>19</java.version>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
     </properties>
@@ -43,7 +49,7 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-layout-template-json</artifactId>
-            <version>2.19.0</version>
+            <version>${log4j.version}</version>
         </dependency>
 
         <!--Dotenv Dependencies-->
@@ -57,24 +63,24 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20220924</version>
+            <version>${json.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.14.1</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.14.1</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!--MongoDB Dependencies-->
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-crypt</artifactId>
-            <version>1.6.1</version>
+            <version>${mongo.version}</version>
         </dependency>
 
         <!--SpringBoot Dependencies-->
@@ -115,7 +121,7 @@
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <version>4.2.0</version>
+            <version>${awaitability.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -150,7 +156,7 @@
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito2</artifactId>
-            <version>2.0.9</version>
+            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -158,12 +164,62 @@
     </dependencies>
 
     <build>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>net.revelc.code.formatter</groupId>
+                    <artifactId>formatter-maven-plugin</artifactId>
+                    <version>${formatter.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${javadoc.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
+
+            <!-- Java Code Formatter using Maven to format with Google Formatting standards -->
             <plugin>
-            <!-- Build an executable JAR -->
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <version>3.1.0</version>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>${formatter.version}</version>
+                <configuration>
+                    <lineEnding>LF</lineEnding>
+                    <encoding>UTF-8</encoding>
+                    <compilerCompliance>${java.version}</compilerCompliance>
+                    <compilerSource>${java.version}</compilerSource>
+                    <compilerTargetPlatform>${java.version}</compilerTargetPlatform>
+                    <excludes>
+                        <exclude>**/target/**</exclude>
+                        <exclude>**/*Test.java</exclude>
+                    </excludes>
+                    <removeTrailingWhitespace>true</removeTrailingWhitespace>
+                    <skipFormatting>false</skipFormatting>
+                    <skipJavaFormatting>false</skipJavaFormatting>
+                    <skipCssFormatting>true</skipCssFormatting>
+                    <skipHtmlFormatting>true</skipHtmlFormatting>
+                    <skipJsFormatting>true</skipJsFormatting>
+                    <skipJsonFormatting>true</skipJsonFormatting>
+                    <skipXmlFormatting>true</skipXmlFormatting>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <!-- Build an executable JAR -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
